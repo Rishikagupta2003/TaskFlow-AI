@@ -6,6 +6,7 @@
   "files": [],
   "references": [
     { "path": "./apps/api-gateway" },
+    { "path": "./apps/identity-service" },
     { "path": "./packages/contracts" }
   ]
 }
