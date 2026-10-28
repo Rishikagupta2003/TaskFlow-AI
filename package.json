@@ -13,6 +13,9 @@
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "test:e2e": "npm run test:e2e --workspaces --if-present",
+    "dev:web": "npm run dev --workspace=@taskflow/web",
+    "dev:gateway": "npm run start:dev --workspace=@taskflow/api-gateway",
+    "dev:identity": "npm run start:dev --workspace=@taskflow/identity-service",
     "format": "prettier --write \"apps/**/*.{ts,tsx}\" \"packages/**/*.{ts,tsx}\""
   },
   "devDependencies": {

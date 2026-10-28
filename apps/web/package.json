@@ -1,0 +1,25 @@
+{
+  "name": "@taskflow/web",
+  "version": "0.0.1",
+  "description": "TaskFlow AI Web Frontend",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start -p 3000",
+    "lint": "oxlint src/"
+  },
+  "dependencies": {
+    "next": "^15.1.7",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/react": "^19.0.8",
+    "@types/react-dom": "^19.0.3",
+    "oxlint": "^1.58.0",
+    "typescript": "^6.0.2"
+  }
+}
