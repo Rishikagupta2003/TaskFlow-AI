@@ -11,6 +11,9 @@ interface HeaderProps {
   onOpenCreateProject?: () => void;
   onOpenCreateTask?: () => void;
   onToggleMobileMenu: () => void;
+  userEmail?: string | null;
+  onOpenAuthModal: () => void;
+  onSignOut: () => void;
 }
 
 export function Header({
@@ -20,6 +23,9 @@ export function Header({
   onOpenCreateProject,
   onOpenCreateTask,
   onToggleMobileMenu,
+  userEmail,
+  onOpenAuthModal,
+  onSignOut,
 }: HeaderProps) {
   const titles: Record<NavView, string> = {
     dashboard: 'Project Overview & Metrics',
@@ -69,12 +75,66 @@ export function Header({
           </button>
         )}
 
-        <div className="workspace-badge">
-          <span>Acme Eng</span>
-        </div>
+        {/* Authentication State Pill */}
+        {userEmail ? (
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '4px 10px',
+                backgroundColor: 'var(--emerald-50)',
+                border: '1px solid #a7f3d0',
+                borderRadius: 'var(--radius-full)',
+                fontSize: '12px',
+                color: 'var(--emerald-700)',
+                fontWeight: 500,
+              }}
+              title={`Authenticated Supabase User: ${userEmail}`}
+            >
+              <span
+                style={{
+                  width: '6px',
+                  height: '6px',
+                  borderRadius: '50%',
+                  backgroundColor: 'var(--emerald-600)',
+                }}
+              />
+              <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {userEmail}
+              </span>
+            </div>
 
-        <div className="avatar-badge" title="Demo User: Rishika Gupta">
-          RG
+            <button
+              type="button"
+              className="btn-secondary"
+              onClick={onSignOut}
+              style={{ padding: '6px 10px', fontSize: '12px' }}
+            >
+              Sign Out
+            </button>
+          </div>
+        ) : (
+          <button
+            type="button"
+            className="btn-secondary"
+            onClick={onOpenAuthModal}
+            style={{
+              padding: '6px 12px',
+              fontSize: '12px',
+              fontWeight: 600,
+              borderColor: 'var(--indigo-600)',
+              color: 'var(--indigo-600)',
+              backgroundColor: 'var(--indigo-50)',
+            }}
+          >
+            Sign In / Sign Up
+          </button>
+        )}
+
+        <div className="avatar-badge" title={userEmail ? `User: ${userEmail}` : 'Demo User: Rishika Gupta'}>
+          {userEmail ? userEmail.slice(0, 2).toUpperCase() : 'RG'}
         </div>
       </div>
     </header>

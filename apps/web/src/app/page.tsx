@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Sidebar, type NavView } from '../components/Sidebar';
 import { Header } from '../components/Header';
 import { DashboardView } from '../components/DashboardView';
@@ -8,6 +8,8 @@ import { ProjectsView } from '../components/ProjectsView';
 import { TasksView } from '../components/TasksView';
 import { AiAssistantView } from '../components/AiAssistantView';
 import { ProfileView } from '../components/ProfileView';
+import { AuthModal } from '../components/AuthModal';
+import { createClient } from '../lib/supabase/client';
 import {
   INITIAL_PROJECTS,
   INITIAL_TASKS,
@@ -24,10 +26,86 @@ export default function AppShell() {
   const [activities, setActivities] = useState<Activity[]>(RECENT_ACTIVITIES);
   const [searchQuery, setSearchQuery] = useState('');
 
+  // Authentication State
+  const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+
   // Modals state
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Check for active Supabase session on client load
+  useEffect(() => {
+    const isConfigured = Boolean(
+      process.env.NEXT_PUBLIC_SUPABASE_URL &&
+        process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY,
+    );
+
+    if (!isConfigured) return;
+
+    try {
+      const supabase = createClient();
+
+      // 1. Initial user check
+      supabase.auth.getUser().then(({ data: { user } }) => {
+        if (user?.email) {
+          setUserEmail(user.email);
+        }
+      });
+
+      // 2. Auth state change listener
+      const {
+        data: { subscription },
+      } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session?.user?.email) {
+          setUserEmail(session.user.email);
+        } else {
+          setUserEmail(null);
+        }
+      });
+
+      return () => {
+        subscription.unsubscribe();
+      };
+    } catch {
+      // Safe fallback if Supabase client cannot be initialized
+    }
+  }, []);
+
+  // Sign out handler
+  const handleSignOut = async () => {
+    try {
+      const supabase = createClient();
+      await supabase.auth.signOut();
+      setUserEmail(null);
+
+      const newActivity: Activity = {
+        id: `act-${Date.now()}`,
+        user: 'You',
+        action: 'signed out from',
+        target: 'Supabase Auth',
+        time: 'Just now',
+        badge: 'updated',
+      };
+      setActivities((prev) => [newActivity, ...prev]);
+    } catch {
+      setUserEmail(null);
+    }
+  };
+
+  const handleAuthSuccess = (email: string) => {
+    setUserEmail(email);
+    const newActivity: Activity = {
+      id: `act-${Date.now()}`,
+      user: email,
+      action: 'authenticated via',
+      target: 'Supabase Auth',
+      time: 'Just now',
+      badge: 'created',
+    };
+    setActivities((prev) => [newActivity, ...prev]);
+  };
 
   // 1. Create Project Handler
   const handleCreateProject = (
@@ -46,7 +124,7 @@ export default function AppShell() {
     // Add activity
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
-      user: 'You',
+      user: userEmail || 'You',
       action: 'created project',
       target: newProject.name,
       time: 'Just now',
@@ -85,7 +163,7 @@ export default function AppShell() {
     // Add activity
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
-      user: 'You',
+      user: userEmail || 'You',
       action: 'added task',
       target: newTask.title,
       time: 'Just now',
@@ -131,7 +209,7 @@ export default function AppShell() {
     // Add activity
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
-      user: 'You',
+      user: userEmail || 'You',
       action: newStatus === 'DONE' ? 'completed task' : 'updated status of',
       target: existingTask.title,
       time: 'Just now',
@@ -159,6 +237,9 @@ export default function AppShell() {
           onOpenCreateProject={() => setIsCreateProjectModalOpen(true)}
           onOpenCreateTask={() => setIsAddTaskModalOpen(true)}
           onToggleMobileMenu={() => setIsMobileNavOpen(!isMobileNavOpen)}
+          userEmail={userEmail}
+          onOpenAuthModal={() => setIsAuthModalOpen(true)}
+          onSignOut={handleSignOut}
         />
 
         <main>
@@ -203,6 +284,13 @@ export default function AppShell() {
           {activeView === 'workspace' && <ProfileView />}
         </main>
       </div>
+
+      {/* Supabase Authentication Modal */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }
