@@ -7,7 +7,7 @@ import { DashboardView } from '../components/DashboardView';
 import { ProjectsView } from '../components/ProjectsView';
 import { TasksView } from '../components/TasksView';
 import { AiAssistantView } from '../components/AiAssistantView';
-import { ProfileView } from '../components/ProfileView';
+import { ProfileView, type UserProfileData } from '../components/ProfileView';
 import { AuthModal } from '../components/AuthModal';
 import { createClient } from '../lib/supabase/client';
 import {
@@ -28,12 +28,81 @@ export default function AppShell() {
 
   // Authentication State
   const [userEmail, setUserEmail] = useState<string | null>(null);
+  const [profile, setProfile] = useState<UserProfileData | null>(null);
+  const [isProfileLoading, setIsProfileLoading] = useState(false);
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
 
   // Modals state
   const [isCreateProjectModalOpen, setIsCreateProjectModalOpen] = useState(false);
   const [isAddTaskModalOpen, setIsAddTaskModalOpen] = useState(false);
   const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
+
+  // Sync profile from API Gateway
+  const syncUserProfile = async (accessToken?: string) => {
+    try {
+      let token = accessToken;
+      if (!token) {
+        const supabase = createClient();
+        const { data: { session } } = await supabase.auth.getSession();
+        token = session?.access_token;
+      }
+      if (!token) return;
+
+      setIsProfileLoading(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const res = await fetch(`${apiUrl}/profiles/me`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data) {
+          setProfile(json.data);
+        }
+      }
+    } catch (err) {
+      console.warn('Could not sync user profile from API Gateway:', (err as Error).message);
+    } finally {
+      setIsProfileLoading(false);
+    }
+  };
+
+  // Update profile in database via API Gateway
+  const handleUpdateProfile = async (updateDto: { displayName?: string; bio?: string }): Promise<boolean> => {
+    try {
+      const supabase = createClient();
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) return false;
+
+      setIsSavingProfile(true);
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api/v1';
+      const res = await fetch(`${apiUrl}/profiles/me`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${session.access_token}`,
+        },
+        body: JSON.stringify(updateDto),
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data) {
+          setProfile(json.data);
+          return true;
+        }
+      }
+      return false;
+    } catch (err) {
+      console.error('Failed to update profile:', err);
+      return false;
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   // Check for active Supabase session on client load
   useEffect(() => {
@@ -54,14 +123,24 @@ export default function AppShell() {
         }
       });
 
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session?.access_token) {
+          syncUserProfile(session.access_token);
+        }
+      });
+
       // 2. Auth state change listener
       const {
         data: { subscription },
       } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session?.user?.email) {
           setUserEmail(session.user.email);
+          if (session.access_token) {
+            syncUserProfile(session.access_token);
+          }
         } else {
           setUserEmail(null);
+          setProfile(null);
         }
       });
 
@@ -79,6 +158,7 @@ export default function AppShell() {
       const supabase = createClient();
       await supabase.auth.signOut();
       setUserEmail(null);
+      setProfile(null);
 
       const newActivity: Activity = {
         id: `act-${Date.now()}`,
@@ -91,11 +171,13 @@ export default function AppShell() {
       setActivities((prev) => [newActivity, ...prev]);
     } catch {
       setUserEmail(null);
+      setProfile(null);
     }
   };
 
   const handleAuthSuccess = (email: string) => {
     setUserEmail(email);
+    syncUserProfile();
     const newActivity: Activity = {
       id: `act-${Date.now()}`,
       user: email,
@@ -281,7 +363,16 @@ export default function AppShell() {
             <AiAssistantView onAcceptAiDraft={handleAddTask} />
           )}
 
-          {activeView === 'workspace' && <ProfileView />}
+          {activeView === 'workspace' && (
+            <ProfileView
+              userEmail={userEmail}
+              profile={profile}
+              isLoading={isProfileLoading}
+              onUpdateProfile={handleUpdateProfile}
+              isSaving={isSavingProfile}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
+          )}
         </main>
       </div>
 

@@ -19,3 +19,22 @@ export interface ApiError {
 export interface ApiErrorResponse {
   error: ApiError;
 }
+
+export interface UserProfileDto {
+  id: string;
+  email: string;
+  displayName: string | null;
+  avatarUrl: string | null;
+  bio: string | null;
+  preferences?: Record<string, unknown> | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UpdateProfileDto {
+  displayName?: string;
+  avatarUrl?: string;
+  bio?: string;
+  preferences?: Record<string, unknown>;
+}
+
