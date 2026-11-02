@@ -11,9 +11,6 @@ import { ProfileView, type UserProfileData } from '../components/ProfileView';
 import { AuthModal } from '../components/AuthModal';
 import { createClient } from '../lib/supabase/client';
 import {
-  INITIAL_PROJECTS,
-  INITIAL_TASKS,
-  RECENT_ACTIVITIES,
   type Project,
   type TaskItem,
   type Activity,
@@ -21,9 +18,9 @@ import {
 
 export default function AppShell() {
   const [activeView, setActiveView] = useState<NavView>('dashboard');
-  const [projects, setProjects] = useState<Project[]>(INITIAL_PROJECTS);
-  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
-  const [activities, setActivities] = useState<Activity[]>(RECENT_ACTIVITIES);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [tasks, setTasks] = useState<TaskItem[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
   // Authentication State
@@ -332,6 +329,10 @@ export default function AppShell() {
               activities={activities}
               onNavigateToProjects={() => setActiveView('projects')}
               onNavigateToTasks={() => setActiveView('tasks')}
+              onNavigateToCreateProject={() => {
+                setActiveView('projects');
+                setIsCreateProjectModalOpen(true);
+              }}
             />
           )}
 
@@ -343,6 +344,7 @@ export default function AppShell() {
               isCreateModalOpen={isCreateProjectModalOpen}
               onOpenCreateModal={() => setIsCreateProjectModalOpen(true)}
               onCloseCreateModal={() => setIsCreateProjectModalOpen(false)}
+              userEmail={userEmail}
             />
           )}
 
@@ -356,11 +358,19 @@ export default function AppShell() {
               isAddModalOpen={isAddTaskModalOpen}
               onOpenAddModal={() => setIsAddTaskModalOpen(true)}
               onCloseAddModal={() => setIsAddTaskModalOpen(false)}
+              onNavigateToCreateProject={() => {
+                setActiveView('projects');
+                setIsCreateProjectModalOpen(true);
+              }}
             />
           )}
 
           {activeView === 'ai' && (
-            <AiAssistantView onAcceptAiDraft={handleAddTask} />
+            <AiAssistantView
+              onAcceptAiDraft={handleAddTask}
+              userEmail={userEmail}
+              onOpenAuthModal={() => setIsAuthModalOpen(true)}
+            />
           )}
 
           {activeView === 'workspace' && (

@@ -28,7 +28,7 @@ export function Sidebar({
     { id: 'dashboard', label: 'Dashboard', icon: <IconDashboard /> },
     { id: 'projects', label: 'Projects', icon: <IconProjects /> },
     { id: 'tasks', label: 'Tasks', icon: <IconTasks /> },
-    { id: 'ai', label: 'AI Assistant', icon: <IconSparkles />, badge: 'Demo' },
+    { id: 'ai', label: 'AI Assistant', icon: <IconSparkles /> },
     { id: 'workspace', label: 'Workspace & Profile', icon: <IconWorkspace /> },
   ];
 
@@ -40,7 +40,7 @@ export function Sidebar({
           <div>
             <div className="brand-name">TaskFlow AI</div>
           </div>
-          <span className="brand-badge">v2.0 Demo</span>
+          <span className="brand-badge">v2.0</span>
         </div>
       </div>
 
@@ -81,9 +81,22 @@ export function Sidebar({
       </nav>
 
       <div className="sidebar-footer">
-        <div className="demo-banner-pill">
-          <span className="pulse-dot" />
-          <span>Local Demo Mode</span>
+        <div
+          className="demo-banner-pill"
+          style={{
+            backgroundColor: 'var(--bg-subtle)',
+            borderColor: 'var(--border-subtle)',
+            color: 'var(--text-secondary)',
+          }}
+        >
+          <span
+            className="pulse-dot"
+            style={{
+              backgroundColor: 'var(--emerald-600)',
+              boxShadow: '0 0 0 2px rgba(5, 150, 105, 0.2)',
+            }}
+          />
+          <span>Workspace Active</span>
         </div>
       </div>
     </aside>

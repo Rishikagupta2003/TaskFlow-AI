@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { DEMO_WORKSPACE } from '../lib/mockData';
+import { IconWorkspace } from './icons';
 
 export interface UserProfileData {
   id: string;
@@ -74,6 +74,16 @@ export function ProfileView({
     }
     return 'TF';
   };
+
+  const defaultWorkspaceName = profile?.displayName
+    ? `${profile.displayName}'s Workspace`
+    : userEmail
+    ? `${userEmail.split('@')[0]}'s Workspace`
+    : 'Personal Workspace';
+
+  const defaultWorkspaceSlug = userEmail
+    ? `${userEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '-')}-ws`
+    : 'personal-ws';
 
   return (
     <div className="page-container">
@@ -148,42 +158,59 @@ export function ProfileView({
             Current Workspace
           </h3>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px' }}>
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Workspace Name:</span>
-              <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
-                {DEMO_WORKSPACE.name}
+          {!userEmail ? (
+            <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+              <div style={{ color: 'var(--text-muted)', marginBottom: '10px' }}>
+                <IconWorkspace style={{ width: '36px', height: '36px', margin: '0 auto' }} />
               </div>
+              <h4 style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                No Workspace Connected
+              </h4>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+                Sign in or register to access your personal workspace and team settings.
+              </p>
+              <button type="button" className="btn-primary" onClick={onOpenAuthModal} style={{ margin: '0 auto' }}>
+                Sign In / Sign Up
+              </button>
             </div>
+          ) : (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', fontSize: '13px' }}>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Workspace Name:</span>
+                <div style={{ fontWeight: 600, color: 'var(--text-primary)', marginTop: '2px' }}>
+                  {defaultWorkspaceName}
+                </div>
+              </div>
 
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Workspace Slug:</span>
-              <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
-                <code>{DEMO_WORKSPACE.slug}</code>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Workspace Slug:</span>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
+                  <code>{defaultWorkspaceSlug}</code>
+                </div>
               </div>
-            </div>
 
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Your Role:</span>
-              <div style={{ fontWeight: 600, color: 'var(--indigo-600)', marginTop: '2px' }}>
-                {DEMO_WORKSPACE.role}
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Your Role:</span>
+                <div style={{ fontWeight: 600, color: 'var(--indigo-600)', marginTop: '2px' }}>
+                  Workspace Owner
+                </div>
               </div>
-            </div>
 
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Team Members:</span>
-              <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
-                {DEMO_WORKSPACE.totalMembers} active engineers
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Team Members:</span>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
+                  1 active member (Personal Workspace)
+                </div>
               </div>
-            </div>
 
-            <div>
-              <span style={{ color: 'var(--text-muted)' }}>Subscription Plan:</span>
-              <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
-                {DEMO_WORKSPACE.plan}
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Subscription Plan:</span>
+                <div style={{ fontWeight: 500, color: 'var(--text-primary)', marginTop: '2px' }}>
+                  Free Tier (Phase 2 Multi-Tenant Organization Support Planned)
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* Profile Card */}
@@ -197,7 +224,7 @@ export function ProfileView({
             }}
           >
             <h3 className="section-heading" style={{ margin: 0 }}>
-              User Profile {userEmail ? '(Live Database)' : '(Demo)'}
+              User Profile {userEmail ? '(Live Database)' : '(Sign In Required)'}
             </h3>
             {userEmail && profile && !isEditing && (
               <button
@@ -214,7 +241,7 @@ export function ProfileView({
           {!userEmail ? (
             <div>
               <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
-                You are currently viewing demo data. Sign in to sync your profile with Supabase PostgreSQL.
+                Sign in or register to sync and manage your user profile in Supabase PostgreSQL.
               </p>
               <button type="button" className="btn-primary" onClick={onOpenAuthModal}>
                 Sign In / Sign Up
@@ -234,7 +261,7 @@ export function ProfileView({
                   id="profile-displayName"
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Rishika Gupta"
+                  placeholder="e.g. Your Name"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
                 />

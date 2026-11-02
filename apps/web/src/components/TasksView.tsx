@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import type { TaskItem, Project } from '../lib/mockData';
-import { IconPlus, IconClose, IconCheck } from './icons';
+import { IconPlus, IconClose, IconCheck, IconAlert } from './icons';
 
-interface TasksViewProps {
+export interface TasksViewProps {
   tasks: TaskItem[];
   projects: Project[];
   searchQuery: string;
@@ -13,6 +13,7 @@ interface TasksViewProps {
   isAddModalOpen: boolean;
   onOpenAddModal: () => void;
   onCloseAddModal: () => void;
+  onNavigateToCreateProject?: () => void;
 }
 
 export function TasksView({
@@ -24,14 +25,22 @@ export function TasksView({
   isAddModalOpen,
   onOpenAddModal,
   onCloseAddModal,
+  onNavigateToCreateProject,
 }: TasksViewProps) {
   // Add task form state
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [projectId, setProjectId] = useState(projects[0]?.id || 'proj-1');
+  const [projectId, setProjectId] = useState(projects[0]?.id || '');
   const [priority, setPriority] = useState<'HIGH' | 'MEDIUM' | 'LOW'>('MEDIUM');
   const [assignee, setAssignee] = useState('');
   const [dueDate, setDueDate] = useState('');
+
+  // Keep selected projectId aligned with projects list
+  useEffect(() => {
+    if (projects.length > 0 && (!projectId || !projects.some((p) => p.id === projectId))) {
+      setProjectId(projects[0].id);
+    }
+  }, [projects, projectId]);
 
   const filteredTasks = tasks.filter((t) => {
     return (
@@ -48,15 +57,16 @@ export function TasksView({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim()) return;
+    if (!title.trim() || projects.length === 0) return;
 
-    const selectedProj = projects.find((p) => p.id === projectId);
+    const selectedProj = projects.find((p) => p.id === projectId) || projects[0];
+    if (!selectedProj) return;
 
     onAddTask({
       title: title.trim(),
       description: description.trim() || 'No description provided.',
-      projectId,
-      projectName: selectedProj?.name || 'General Project',
+      projectId: selectedProj.id,
+      projectName: selectedProj.name,
       status: 'TODO',
       priority,
       assignee: assignee.trim() || 'Unassigned',
@@ -164,13 +174,13 @@ export function TasksView({
   return (
     <div className="page-container">
       {/* Board Controls */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px', flexWrap: 'wrap', gap: '16px' }}>
         <div>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
             Sprint Workflow Board
           </h2>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
-            Click action buttons on tasks to test immediate state transitions
+            Track and transition tasks across To Do, In Progress, and Done stages.
           </p>
         </div>
 
@@ -179,6 +189,44 @@ export function TasksView({
           <span>Add Task</span>
         </button>
       </div>
+
+      {/* Guide Banner when zero projects exist */}
+      {projects.length === 0 && (
+        <div
+          style={{
+            backgroundColor: 'var(--amber-50)',
+            border: '1px solid #fde68a',
+            borderRadius: 'var(--radius-md)',
+            padding: '14px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            flexWrap: 'wrap',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ color: 'var(--amber-700)' }}>
+              <IconAlert />
+            </span>
+            <span style={{ fontSize: '13px', color: 'var(--amber-700)', fontWeight: 500 }}>
+              No projects created yet. Create a project first to assign and manage sprint tasks.
+            </span>
+          </div>
+          {onNavigateToCreateProject && (
+            <button
+              type="button"
+              className="btn-primary"
+              style={{ fontSize: '12px', padding: '6px 12px' }}
+              onClick={onNavigateToCreateProject}
+            >
+              <IconPlus />
+              <span>Create Project</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {/* 3-Column Kanban Board */}
       <div className="kanban-board">
@@ -231,7 +279,7 @@ export function TasksView({
           <div className="modal-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 id="add-task-title" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Add New Task (Demo State)
+                Add New Task
               </h2>
               <button
                 type="button"
@@ -242,99 +290,129 @@ export function TasksView({
               </button>
             </div>
 
-            <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="task-title">Task Title *</label>
-                <input
-                  id="task-title"
-                  type="text"
-                  className="form-input"
-                  placeholder="e.g. Implement rate limiting on API gateway"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-
-              <div className="form-group">
-                <label className="form-label" htmlFor="task-desc">Description</label>
-                <textarea
-                  id="task-desc"
-                  className="form-textarea"
-                  rows={2}
-                  placeholder="Provide task criteria or notes..."
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                />
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="task-proj">Project</label>
-                  <select
-                    id="task-proj"
-                    className="form-select"
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name}
-                      </option>
-                    ))}
-                  </select>
+            {projects.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '24px 12px' }}>
+                <div style={{ color: 'var(--amber-600)', marginBottom: '12px' }}>
+                  <IconAlert style={{ width: '40px', height: '40px', margin: '0 auto' }} />
                 </div>
-
-                <div className="form-group">
-                  <label className="form-label" htmlFor="task-priority">Priority</label>
-                  <select
-                    id="task-priority"
-                    className="form-select"
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as any)}
+                <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '8px' }}>
+                  Project Required
+                </h3>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5, maxWidth: '360px', margin: '0 auto 24px' }}>
+                  Every task belongs to a project. Please create your first project before adding tasks to the workflow board.
+                </p>
+                <div style={{ display: 'flex', justifyContent: 'center', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    onClick={() => {
+                      onCloseAddModal();
+                      onNavigateToCreateProject?.();
+                    }}
                   >
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                  </select>
+                    <IconPlus />
+                    <span>Create Project First</span>
+                  </button>
+                  <button type="button" className="btn-secondary" onClick={onCloseAddModal}>
+                    Cancel
+                  </button>
                 </div>
               </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+            ) : (
+              <form onSubmit={handleSubmit}>
                 <div className="form-group">
-                  <label className="form-label" htmlFor="task-assignee">Assignee</label>
+                  <label className="form-label" htmlFor="task-title">Task Title *</label>
                   <input
-                    id="task-assignee"
+                    id="task-title"
                     type="text"
                     className="form-input"
-                    placeholder="e.g. Alex Chen"
-                    value={assignee}
-                    onChange={(e) => setAssignee(e.target.value)}
+                    placeholder="e.g. Implement rate limiting on API gateway"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    required
                   />
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="task-due">Due Date</label>
-                  <input
-                    id="task-due"
-                    type="text"
-                    className="form-input"
-                    placeholder="e.g. Friday"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
+                  <label className="form-label" htmlFor="task-desc">Description</label>
+                  <textarea
+                    id="task-desc"
+                    className="form-textarea"
+                    rows={2}
+                    placeholder="Provide task criteria or notes..."
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                   />
                 </div>
-              </div>
 
-              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
-                <button type="button" className="btn-secondary" onClick={onCloseAddModal}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn-primary">
-                  Create Task
-                </button>
-              </div>
-            </form>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="task-proj">Project *</label>
+                    <select
+                      id="task-proj"
+                      className="form-select"
+                      value={projectId}
+                      onChange={(e) => setProjectId(e.target.value)}
+                    >
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>
+                          {p.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="task-priority">Priority</label>
+                    <select
+                      id="task-priority"
+                      className="form-select"
+                      value={priority}
+                      onChange={(e) => setPriority(e.target.value as 'HIGH' | 'MEDIUM' | 'LOW')}
+                    >
+                      <option value="HIGH">High</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="LOW">Low</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="task-assignee">Assignee</label>
+                    <input
+                      id="task-assignee"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Lead Engineer"
+                      value={assignee}
+                      onChange={(e) => setAssignee(e.target.value)}
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label className="form-label" htmlFor="task-due">Due Date</label>
+                    <input
+                      id="task-due"
+                      type="text"
+                      className="form-input"
+                      placeholder="e.g. Friday"
+                      value={dueDate}
+                      onChange={(e) => setDueDate(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '24px' }}>
+                  <button type="button" className="btn-secondary" onClick={onCloseAddModal}>
+                    Cancel
+                  </button>
+                  <button type="submit" className="btn-primary">
+                    Create Task
+                  </button>
+                </div>
+              </form>
+            )}
           </div>
         </div>
       )}

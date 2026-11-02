@@ -2,15 +2,16 @@
 
 import React, { useState } from 'react';
 import type { Project } from '../lib/mockData';
-import { IconPlus, IconClose, IconSearch } from './icons';
+import { IconPlus, IconClose, IconSearch, IconProjects } from './icons';
 
-interface ProjectsViewProps {
+export interface ProjectsViewProps {
   projects: Project[];
   searchQuery: string;
   onCreateProject: (project: Omit<Project, 'id' | 'progress' | 'taskCount' | 'completedTaskCount'>) => void;
   isCreateModalOpen: boolean;
   onOpenCreateModal: () => void;
   onCloseCreateModal: () => void;
+  userEmail?: string | null;
 }
 
 export function ProjectsView({
@@ -20,6 +21,7 @@ export function ProjectsView({
   isCreateModalOpen,
   onOpenCreateModal,
   onCloseCreateModal,
+  userEmail,
 }: ProjectsViewProps) {
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'In Progress' | 'Planning' | 'Completed'>('ALL');
 
@@ -47,7 +49,7 @@ export function ProjectsView({
       name: name.trim(),
       description: description.trim() || 'No description provided.',
       status,
-      lead: lead.trim() || 'Current User (Demo)',
+      lead: lead.trim() || (userEmail ? userEmail.split('@')[0] : 'Project Lead'),
       dueDate: dueDate || 'TBD',
     });
 
@@ -109,17 +111,23 @@ export function ProjectsView({
           }}
         >
           <div style={{ color: 'var(--text-muted)', marginBottom: '12px' }}>
-            <IconSearch style={{ width: '40px', height: '40px' }} />
+            {projects.length === 0 ? (
+              <IconProjects style={{ width: '48px', height: '48px', margin: '0 auto' }} />
+            ) : (
+              <IconSearch style={{ width: '40px', height: '40px', margin: '0 auto' }} />
+            )}
           </div>
           <h3 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '6px' }}>
-            No projects match your filter
+            {projects.length === 0 ? 'No projects created yet' : 'No projects match your filter'}
           </h3>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '16px' }}>
-            Try adjusting your search query or create a new project.
+            {projects.length === 0
+              ? 'Create your first project to start organizing tasks, tracking sprint progress, and delivering milestones.'
+              : 'Try adjusting your search query or filter to find projects.'}
           </p>
-          <button type="button" className="btn-primary" onClick={onOpenCreateModal}>
+          <button type="button" className="btn-primary" onClick={onOpenCreateModal} style={{ margin: '0 auto' }}>
             <IconPlus />
-            <span>Create a Project</span>
+            <span>{projects.length === 0 ? 'Create First Project' : 'Create a Project'}</span>
           </button>
         </div>
       ) : (
@@ -157,23 +165,9 @@ export function ProjectsView({
                 <div className="progress-track">
                   <div className="progress-fill" style={{ width: `${project.progress}%` }} />
                 </div>
-
-                <div
-                  style={{
-                    display: 'flex',
-                    justifyContent: 'space-between',
-                    alignItems: 'center',
-                    marginTop: '16px',
-                    paddingTop: '12px',
-                    borderTop: '1px solid var(--border-subtle)',
-                    fontSize: '12px',
-                    color: 'var(--text-muted)',
-                  }}
-                >
-                  <div>
-                    Lead: <strong style={{ color: 'var(--text-primary)' }}>{project.lead}</strong>
-                  </div>
-                  <div>Due: {project.dueDate}</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginTop: '8px' }}>
+                  <span>Lead: {project.lead}</span>
+                  <span>Due: {project.dueDate}</span>
                 </div>
               </div>
             </div>
@@ -187,7 +181,7 @@ export function ProjectsView({
           <div className="modal-card">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <h2 id="modal-title" style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-primary)' }}>
-                Create New Project (Demo State)
+                Create New Project
               </h2>
               <button
                 type="button"
@@ -218,7 +212,7 @@ export function ProjectsView({
                   id="proj-desc"
                   className="form-textarea"
                   rows={3}
-                  placeholder="Summarize project objectives and scope..."
+                  placeholder="What is the objective and business impact of this project?"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                 />
@@ -231,16 +225,16 @@ export function ProjectsView({
                     id="proj-status"
                     className="form-select"
                     value={status}
-                    onChange={(e) => setStatus(e.target.value as any)}
+                    onChange={(e) => setStatus(e.target.value as 'In Progress' | 'Planning' | 'Completed')}
                   >
-                    <option value="In Progress">In Progress</option>
                     <option value="Planning">Planning</option>
+                    <option value="In Progress">In Progress</option>
                     <option value="Completed">Completed</option>
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="proj-due">Target Date</label>
+                  <label className="form-label" htmlFor="proj-due">Target Due Date</label>
                   <input
                     id="proj-due"
                     type="text"
@@ -258,7 +252,7 @@ export function ProjectsView({
                   id="proj-lead"
                   type="text"
                   className="form-input"
-                  placeholder="e.g. Rishika Gupta"
+                  placeholder="e.g. Project Lead"
                   value={lead}
                   onChange={(e) => setLead(e.target.value)}
                 />
@@ -269,7 +263,7 @@ export function ProjectsView({
                   Cancel
                 </button>
                 <button type="submit" className="btn-primary">
-                  Save Project
+                  Create Project
                 </button>
               </div>
             </form>

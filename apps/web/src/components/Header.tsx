@@ -31,7 +31,7 @@ export function Header({
     dashboard: 'Project Overview & Metrics',
     projects: 'Active Projects',
     tasks: 'Team Task Board',
-    ai: 'AI Advisory Assistant (Demo)',
+    ai: 'AI Advisory Assistant',
     workspace: 'Workspace & Profile Settings',
   };
 
@@ -101,16 +101,14 @@ export function Header({
                   backgroundColor: 'var(--emerald-600)',
                 }}
               />
-              <span style={{ maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                {userEmail}
-              </span>
+              <span>{userEmail}</span>
             </div>
 
             <button
               type="button"
               className="btn-secondary"
               onClick={onSignOut}
-              style={{ padding: '6px 10px', fontSize: '12px' }}
+              style={{ padding: '6px 12px', fontSize: '12px' }}
             >
               Sign Out
             </button>
@@ -118,23 +116,16 @@ export function Header({
         ) : (
           <button
             type="button"
-            className="btn-secondary"
+            className="btn-primary"
             onClick={onOpenAuthModal}
-            style={{
-              padding: '6px 12px',
-              fontSize: '12px',
-              fontWeight: 600,
-              borderColor: 'var(--indigo-600)',
-              color: 'var(--indigo-600)',
-              backgroundColor: 'var(--indigo-50)',
-            }}
+            style={{ fontSize: '13px', padding: '7px 14px' }}
           >
             Sign In / Sign Up
           </button>
         )}
 
-        <div className="avatar-badge" title={userEmail ? `User: ${userEmail}` : 'Demo User: Rishika Gupta'}>
-          {userEmail ? userEmail.slice(0, 2).toUpperCase() : 'RG'}
+        <div className="avatar-badge" title={userEmail ? `User: ${userEmail}` : 'Guest User'}>
+          {userEmail ? userEmail.slice(0, 2).toUpperCase() : 'TF'}
         </div>
       </div>
     </header>
