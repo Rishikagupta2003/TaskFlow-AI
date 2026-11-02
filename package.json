@@ -16,6 +16,7 @@
     "dev:web": "npm run dev --workspace=@taskflow/web",
     "dev:gateway": "npm run start:dev --workspace=@taskflow/api-gateway",
     "dev:identity": "npm run start:dev --workspace=@taskflow/identity-service",
+    "dev:ai": "npm run start:dev --workspace=@taskflow/ai-service",
     "format": "prettier --write \"apps/**/*.{ts,tsx}\" \"packages/**/*.{ts,tsx}\""
   },
   "devDependencies": {
